@@ -56,4 +56,4 @@ const projects = [
     },
 ]
 
-export default { clients, projects }
+module.exports = { clients, projects }

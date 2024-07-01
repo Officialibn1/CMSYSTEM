@@ -1,4 +1,4 @@
-const { clients } = require('../sampledb.js').default
+const { clients } = require('../sampledb.js')
 
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLNonNull } = require('graphql')
 
