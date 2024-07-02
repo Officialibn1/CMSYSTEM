@@ -16,7 +16,7 @@ const ClientQuery = {
         type: ClientType,
         args: { id: { type: new GraphQLNonNull(GraphQLID) } },
         resolve(parent, args) {
-            return Client.findBtId(args.id)
+            return Client.findById(args.id)
         }
     },
     clients: {
