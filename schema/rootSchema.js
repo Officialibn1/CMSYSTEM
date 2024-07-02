@@ -19,6 +19,7 @@ const mutation = new GraphQLObjectType({
     fields: {
         addClient: ClientMutation.addClient,
         deleteClient: ClientMutation.deleteClient,
+        updateClient: ClientMutation.updateClient,
         addProject: ProjectMutation.addProject,
         updateProject: ProjectMutation.updateProject,
         deleteProject: ProjectMutation.deleteProject,
