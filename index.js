@@ -10,7 +10,7 @@ const connectDB = require('./config/db')
 
 const cors = require('cors')
 
-// require('dotenv').config()
+require('dotenv').config()
 
 const port = process.env.PORT || 5000
 
@@ -24,7 +24,6 @@ app.use(
     '/graphql',
     createHandler({
         schema,
-        graphiql: true
     })
 )
 
