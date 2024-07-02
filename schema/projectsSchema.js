@@ -119,27 +119,37 @@ const ProjectMutation = {
             clientId: { type: GraphQLID },
         },
         resolve(parent, args) {
-            return Project.findByIdAndUpdate(
-                args.id,
-                {
-                    $set: {
-                        name: args.name,
-                        description: args.description,
-                        status: args.status,
-                        clientId: args.clientId
-                    },
+            return Project.findById(args.id)
+                .then(previousProject => {
+                    if (!previousProject) {
+                        throw new Error(`Project with ID: ${args.id} not found`)
+                    }
 
-                },
-                { new: false }
-            ).then(updateProject => {
-                if (!updateProject) {
-                    throw new Error(`Project with ID: ${args.id} not found`)
-                }
+                    return Project.findByIdAndUpdate(
+                        args.id,
+                        {
+                            $set: {
+                                name: args.name || previousProject.name,
+                                description: args.description || previousProject.description,
+                                status: args.status || previousProject.status,
+                                clientId: args.clientId || previousProject.clientId
+                            },
 
-                return updateProject
-            }).catch(error => {
-                console.error(`Failed to update Project with ID: ${args.id} & Error: ${error}`);
-            })
+                        },
+                        { new: true, runValidators: true }
+                    )
+                })
+                .then(updateProject => {
+                    if (!updateProject) {
+                        throw new Error(`Failed to update Project with ID: ${args.id}`)
+                    }
+
+                    return updateProject
+                }).catch(error => {
+                    console.error(`Error updating Project: ${error}`);
+
+                    throw error
+                })
         }
     }
 }
@@ -149,3 +159,4 @@ module.exports = {
     ProjectQuery,
     ProjectMutation
 }
+
