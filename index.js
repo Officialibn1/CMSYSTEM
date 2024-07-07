@@ -1,3 +1,5 @@
+// https://cloud.hasura.io/public/graphiql?endpoint=http%3A%2F%2Flocalhost%3A5000%2Fgraphql
+
 const express = require('express')
 
 const colors = require('colors')
