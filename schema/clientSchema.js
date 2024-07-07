@@ -1,5 +1,6 @@
 const Client = require('../config/models/Client')
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLNonNull } = require('graphql')
+const Project = require('../config/models/Project')
 
 const ClientType = new GraphQLObjectType({
     name: 'Client',
@@ -53,19 +54,23 @@ const ClientMutation = {
         args: {
             id: { type: new GraphQLNonNull(GraphQLID) }
         },
-        resolve(parent, args) {
-            return Client.findByIdAndDelete(args.id)
-                .then(deleteClient => {
-                    if (!deleteClient) {
-                        throw new Error(`Client with ID: ${args.id} not found`)
-                    }
+        async resolve(parent, args) {
+            try {
+                // First, delete all projects associated with this client
+                await Project.deleteMany({ clientId: args.id });
 
-                    return deleteClient
-                })
-                .catch(error => {
-                    console.error(`Error Deleting Client: ${error}`)
-                    throw error
-                })
+                // Then, delete the client
+                const deletedClient = await Client.findByIdAndDelete(args.id);
+
+                if (!deletedClient) {
+                    throw new Error(`Client with ID: ${args.id} not found`);
+                }
+
+                return deletedClient;
+            } catch (error) {
+                console.error(`Error Deleting Client: ${error}`);
+                throw error;
+            }
         }
     },
     updateClient: {
