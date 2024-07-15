@@ -8,6 +8,7 @@ const Project = require('../config/models/Project')
 const Client = require('../config/models/Client')
 
 const admin = require('firebase-admin')
+const { AuthenticationError } = require('../config/errors/authenticationError.js')
 
 
 
@@ -86,20 +87,20 @@ const UserMutation = {
         }
     },
     signIn: {
-        type: GraphQLString,
+        type: UserType,
         args: {
             uid: { type: new GraphQLNonNull(GraphQLID) },
             email: { type: GraphQLString }
         },
         async resolve(parent, args) {
             try {
-                const user = await admin.auth().getUserByProviderUid(args.uid)
+                const user = await admin.auth().getUser(args.uid)
 
                 if (!user) {
-                    throw new Error('User Does Not Exist.')
+                    throw new AuthenticationError()
                 }
 
-                return User.findOne({ uid: { $in: args.uid } })
+                return await User.findOne({ uid: { $in: args.uid } })
             } catch (error) {
                 console.log(`Firebase Error: ${error}`.blue.underline);
 
