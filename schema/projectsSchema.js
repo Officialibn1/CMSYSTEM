@@ -1,4 +1,4 @@
-const { ClientType } = require('./clientSchema.js')
+
 
 const Client = require('../config/models/Client.js')
 const Project = require('../config/models/Project.js')
@@ -16,18 +16,22 @@ const { AuthenticationError } = require('../config/errors/authenticationError.js
 
 const ProjectType = new GraphQLObjectType({
     name: 'Project',
-    fields: () => ({
-        id: { type: GraphQLID },
-        name: { type: GraphQLString },
-        description: { type: GraphQLString },
-        status: { type: GraphQLString },
-        client: {
-            type: ClientType,
-            async resolve(parent, args) {
-                return await Client.findById(parent.clientId)
+    fields: () => {
+        const { ClientType } = require('./clientSchema.js')
+
+        return {
+            id: { type: GraphQLID },
+            name: { type: GraphQLString },
+            description: { type: GraphQLString },
+            status: { type: GraphQLString },
+            client: {
+                type: ClientType,
+                async resolve(parent, args) {
+                    return await Client.findById(parent.clientId)
+                }
             }
         }
-    })
+    }
 })
 
 const ProjectQuery = {

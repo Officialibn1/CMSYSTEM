@@ -2,8 +2,7 @@ const { GraphQLObjectType, GraphQLList, GraphQLNonNull, GraphQLString, GraphQLID
 
 
 const User = require('../config/models/User.js')
-const { ProjectType } = require('./projectsSchema.js')
-const { ClientType } = require('./clientSchema.js')
+
 const Project = require('../config/models/Project')
 const Client = require('../config/models/Client')
 
@@ -14,24 +13,29 @@ const { AuthenticationError } = require('../config/errors/authenticationError.js
 
 const UserType = new GraphQLObjectType({
     name: 'User',
-    fields: () => ({
-        id: { type: GraphQLID },
-        uid: { type: GraphQLID },
-        email: { type: GraphQLString },
-        name: { type: GraphQLString },
-        projects: {
-            type: new GraphQLList(ProjectType),
-            resolve(parent, args) {
-                return Project.find({ _id: { $in: parent.projects } })
-            }
-        },
-        clients: {
-            type: new GraphQLList(ClientType),
-            resolve(parent, args) {
-                return Client.find({ _id: { $in: parent.clients } })
+    fields: () => {
+        const { ProjectType } = require('./projectsSchema.js')
+        const { ClientType } = require('./clientSchema.js')
+
+        return {
+            id: { type: GraphQLID },
+            uid: { type: GraphQLString },
+            email: { type: GraphQLString },
+            name: { type: GraphQLString },
+            projects: {
+                type: new GraphQLList(ProjectType),
+                async resolve(parent, args) {
+                    return await Project.find({ _id: { $in: parent.projects } })
+                }
+            },
+            clients: {
+                type: new GraphQLList(ClientType),
+                async resolve(parent, args) {
+                    return await Client.find({ _id: { $in: parent.clients } })
+                }
             }
         }
-    })
+    }
 })
 
 const UserQuery = {
@@ -42,8 +46,8 @@ const UserQuery = {
                 type: new GraphQLNonNull(GraphQLID),
             }
         },
-        resolve(parent, args) {
-            return User.findByID(args.id)
+        async resolve(parent, args) {
+            return await User.findByID(args.id)
         }
     }
 }

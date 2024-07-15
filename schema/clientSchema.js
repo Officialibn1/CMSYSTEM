@@ -2,15 +2,26 @@ const Client = require('../config/models/Client')
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLNonNull } = require('graphql')
 const Project = require('../config/models/Project')
 const { AuthenticationError } = require('../config/errors/authenticationError')
+const User = require('../config/models/User')
 
 const ClientType = new GraphQLObjectType({
     name: 'Client',
-    fields: () => ({
-        id: { type: GraphQLID },
-        name: { type: GraphQLString },
-        email: { type: GraphQLString },
-        phone: { type: GraphQLString },
-    })
+    fields: () => {
+        const { UserType } = require('./userSchema.js')
+
+        return {
+            id: { type: GraphQLID },
+            name: { type: GraphQLString },
+            email: { type: GraphQLString },
+            phone: { type: GraphQLString },
+            user: {
+                type: UserType,
+                async resolve(parent, args) {
+                    return await User.findOne(parent.userUID)
+                }
+            },
+        }
+    }
 })
 
 const ClientQuery = {
@@ -39,6 +50,8 @@ const ClientQuery = {
             }
 
             // console.log('Get CLients: ', context.user.user_id);
+
+            // TRGDfrVpaBQnQPtou0Tj4sI5xK62
 
             return await Client.find().exec()
         }
