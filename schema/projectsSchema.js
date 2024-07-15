@@ -11,6 +11,7 @@ const {
     GraphQLList,
     GraphQLNonNull
 } = require('graphql')
+const { AuthenticationError } = require('../config/errors/authenticationError.js')
 
 
 const ProjectType = new GraphQLObjectType({
@@ -22,8 +23,8 @@ const ProjectType = new GraphQLObjectType({
         status: { type: GraphQLString },
         client: {
             type: ClientType,
-            resolve(parent, args) {
-                return Client.findById(parent.clientId)
+            async resolve(parent, args) {
+                return await Client.findById(parent.clientId)
             }
         }
     })
@@ -33,14 +34,24 @@ const ProjectQuery = {
     project: {
         type: ProjectType,
         args: { id: { type: GraphQLID } },
-        resolve(parent, args) {
-            return Project.findById(args.id)
+        async resolve(parent, args, context) {
+
+            if (!context.user) {
+                throw new AuthenticationError()
+            }
+
+            return await Project.findById(args.id)
         }
     },
     projects: {
         type: new GraphQLList(ProjectType),
-        resolve(parent, args) {
-            return Project.find()
+        async resolve(parent, args, context) {
+
+            if (!context.user) {
+                throw new AuthenticationError()
+            }
+
+            return await Project.find()
         }
     }
 }
@@ -65,7 +76,12 @@ const ProjectMutation = {
             },
             clientId: { type: new GraphQLNonNull(GraphQLID) }
         },
-        resolve(parent, args) {
+        async resolve(parent, args, context) {
+
+            if (!context.user) {
+                throw new AuthenticationError()
+            }
+
             const project = new Project({
                 name: args.name,
                 description: args.description,
@@ -84,7 +100,11 @@ const ProjectMutation = {
         args: {
             id: { type: new GraphQLNonNull(GraphQLID) }
         },
-        resolve(parent, args) {
+        async resolve(parent, args, context) {
+            if (!context.user) {
+                throw new AuthenticationError()
+            }
+
             return Project.findByIdAndDelete(args.id)
                 .then(deleteProject => {
                     if (!deleteProject) {
@@ -117,7 +137,11 @@ const ProjectMutation = {
             },
             clientId: { type: GraphQLID },
         },
-        resolve(parent, args) {
+        async resolve(parent, args, context) {
+            if (!context.user) {
+                throw new AuthenticationError()
+            }
+
             return Project.findById(args.id)
                 .then(previousProject => {
                     if (!previousProject) {

@@ -1,6 +1,7 @@
 const Client = require('../config/models/Client')
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLNonNull } = require('graphql')
 const Project = require('../config/models/Project')
+const { AuthenticationError } = require('../config/errors/authenticationError')
 
 const ClientType = new GraphQLObjectType({
     name: 'Client',
@@ -16,14 +17,30 @@ const ClientQuery = {
     client: {
         type: ClientType,
         args: { id: { type: new GraphQLNonNull(GraphQLID) } },
-        resolve(parent, args) {
-            return Client.findById(args.id)
+        async resolve(parent, args, context) {
+
+
+
+            if (!context.user) {
+                throw new AuthenticationError();
+
+            }
+
+            return await Client.findById(args.id)
         }
     },
     clients: {
         type: new GraphQLList(ClientType),
-        resolve(parent, args) {
-            return Client.find()
+        async resolve(parent, args, context) {
+
+
+            if (!context.user) {
+                throw new AuthenticationError();
+            }
+
+            // console.log('Get CLients: ', context.user.user_id);
+
+            return await Client.find().exec()
         }
     }
 }

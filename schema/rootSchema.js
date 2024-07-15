@@ -4,6 +4,7 @@ const { ClientQuery, ClientMutation } = require("./clientSchema");
 
 const { GraphQLObjectType, GraphQLSchema } = require("graphql");
 const { DashboardQuery } = require("./dashboardSchema");
+const { UserQuery, UserMutation } = require("./userSchema");
 
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
@@ -12,6 +13,7 @@ const RootQuery = new GraphQLObjectType({
         clients: ClientQuery.clients,
         project: ProjectQuery.project,
         projects: ProjectQuery.projects,
+        user: UserQuery.user,
         dashboard: DashboardQuery.dashboardData
     }
 })
@@ -25,6 +27,8 @@ const mutation = new GraphQLObjectType({
         addProject: ProjectMutation.addProject,
         updateProject: ProjectMutation.updateProject,
         deleteProject: ProjectMutation.deleteProject,
+        signUp: UserMutation.signUp,
+        signIn: UserMutation.signIn,
 
     }
 })

@@ -16,10 +16,10 @@ const DashboardType = new GraphQLObjectType({
 const DashboardQuery = {
     dashboardData: {
         type: DashboardType,
-        resolve(parent, args) {
+        async resolve(parent, args) {
             return {
-                clients: Client.find(),
-                projects: Project.find()
+                clients: await Client.find(),
+                projects: await Project.find()
             }
         }
     }
