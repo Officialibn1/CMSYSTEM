@@ -1,4 +1,5 @@
-const { getAuth } = require('firebase-admin/auth');
+
+const admin = require('firebase-admin')
 
 const authenticate = async (req, res, next) => {
     const authHeader = req.headers.authorization
@@ -12,20 +13,23 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split('Bearer ')[1]
 
 
-    // console.log('authHeader: ', JSON.stringify(authHeader));
 
-    // console.log('token: ', JSON.stringify(token));
 
     if (!token) {
         req.user = null
+
+        console.log(null);
 
         return next()
     }
 
     try {
-        const decodedToken = getAuth().verifyIdToken(token)
+        const decodedAdminToken = await admin.auth().verifyIdToken(token);
 
-        req.user = decodedToken
+
+        // console.log('decodedAdminToken: ', decodedAdminToken);
+
+        req.user = decodedAdminToken
 
         next()
 

@@ -5,7 +5,11 @@ const express = require('express')
 
 const colors = require('colors')
 
-const { createHandler } = require("graphql-http/lib/use/express")
+// const { createHandler } = require("graphql-http/lib/use/express")
+
+const { ApolloServer } = require('@apollo/server')
+
+const { expressMiddleware } = require('@apollo/server/express4')
 
 const schema = require('./schema/rootSchema')
 
@@ -20,6 +24,7 @@ const serviceAccountKey = require('./config/serviceAccountKey.json')
 const admin = require('firebase-admin');
 
 const authenticate = require('./config/middleware/authenticate.js')
+
 const { AuthenticationError } = require('./config/errors/authenticationError.js')
 
 colors.enable();
@@ -39,33 +44,73 @@ app.use(cors())
 app.use(express.json())
 app.use(authenticate)
 
-
-app.use(
-    '/graphql',
-    createHandler({
-        schema,
-        context: (req) => ({ user: req.user }),
-        formatError: (err) => {
-            if (err.originalError instanceof AuthenticationError) {
-                return {
-                    message: err.message,
-                    extensions: {
-                        code: err.originalError.code,
-                        status: err.originalError.status
-                    }
-                }
-            }
-
+const server = new ApolloServer({
+    schema,
+    formatError: (err) => {
+        if (err.originalError instanceof AuthenticationError) {
             return {
                 message: err.message,
                 extensions: {
-                    code: 'INTERNAL_SERVER_ERROR',
-                    status: 500
+                    code: err.originalError.code,
+                    status: err.originalError.status
                 }
             }
         }
-    })
-)
 
-app.listen(port, console.log(`SERVER RUNNING ON PORT: http://localhost:${port}`))
+        return {
+            message: err.message,
+            extensions: {
+                code: 'INTERNAL_SERVER_ERROR',
+                status: 500
+            }
+        }
+    }
+})
+
+async function startServer() {
+    await server.start()
+
+    app.use(
+        '/graphql',
+        expressMiddleware(server, {
+            context: async ({ req }) => {
+                return { user: req.user }
+            }
+        })
+    )
+
+    app.listen(port, console.log(`SERVER RUNNING ON PORT: http://localhost:${port}`))
+}
+
+startServer()
+
+
+// app.use(
+//     '/graphql',
+//     createHandler({
+//         schema,
+//         context: (req) => ({ user: req.user }),
+//         formatError: (err) => {
+//             if (err.originalError instanceof AuthenticationError) {
+//                 return {
+//                     message: err.message,
+//                     extensions: {
+//                         code: err.originalError.code,
+//                         status: err.originalError.status
+//                     }
+//                 }
+//             }
+
+//             return {
+//                 message: err.message,
+//                 extensions: {
+//                     code: 'INTERNAL_SERVER_ERROR',
+//                     status: 500
+//                 }
+//             }
+//         }
+//     })
+// )
+
+
 
