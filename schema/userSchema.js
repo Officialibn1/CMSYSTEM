@@ -1,15 +1,9 @@
 const { GraphQLObjectType, GraphQLList, GraphQLNonNull, GraphQLString, GraphQLID } = require('graphql')
-
-
 const User = require('../config/models/User.js')
-
 const Project = require('../config/models/Project')
 const Client = require('../config/models/Client')
-
 const admin = require('firebase-admin')
 const { AuthenticationError } = require('../config/errors/authenticationError.js')
-
-
 
 const UserType = new GraphQLObjectType({
     name: 'User',
@@ -69,13 +63,7 @@ const UserMutation = {
         },
         async resolve(parent, args) {
             try {
-                // const userRecord = await admin.auth().createUser({
-                //     email: args.email,
-                //     password: args.password,
-                //     displayName: args.name
-                // })
 
-                // const verifyUser = await admin
                 const newUser = new User({
                     uid: args.uid,
                     email: args.email,
