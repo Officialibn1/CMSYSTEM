@@ -8,6 +8,7 @@ const ClientType = new GraphQLObjectType({
     name: 'Client',
     fields: () => {
         const { UserType } = require('./userSchema.js')
+        const { ProjectType } = require('./projectsSchema.js')
 
         return {
             id: { type: GraphQLID },
@@ -16,10 +17,26 @@ const ClientType = new GraphQLObjectType({
             phone: { type: GraphQLString },
             user: {
                 type: UserType,
-                async resolve(parent, args) {
+                async resolve(parent, args, context) {
+                    if (!context.user) {
+                        throw new AuthenticationError();
+                    }
+
                     return await User.findOne(parent.userUID)
                 }
             },
+            projects: {
+                type: new GraphQLList(ProjectType),
+                async resolve(parent, args, context) {
+                    if (!context.user) {
+                        throw new AuthenticationError();
+                    }
+
+                    const userUID = await context?.user.uid
+
+                    return await Project.find({ _id: { $in: parent.projectsID }, userUID })
+                }
+            }
         }
     }
 })
@@ -27,33 +44,31 @@ const ClientType = new GraphQLObjectType({
 const ClientQuery = {
     client: {
         type: ClientType,
-        args: { id: { type: new GraphQLNonNull(GraphQLID) } },
+        args: {
+            id: { type: new GraphQLNonNull(GraphQLID) },
+        },
         async resolve(parent, args, context) {
-
-
 
             if (!context.user) {
                 throw new AuthenticationError();
-
             }
 
-            return await Client.findById(args.id)
+            const userUID = await context?.user.uid
+
+            return await Client.findOne({ _id: args.id, userUID })
         }
     },
     clients: {
         type: new GraphQLList(ClientType),
         async resolve(parent, args, context) {
 
-
             if (!context.user) {
                 throw new AuthenticationError();
             }
 
-            // console.log('Get CLients: ', context.user.user_id);
+            const userUID = await context?.user.uid
 
-            // TRGDfrVpaBQnQPtou0Tj4sI5xK62
-
-            return await Client.find().exec()
+            return await Client.find({ userUID })
         }
     }
 }
@@ -66,17 +81,28 @@ const ClientMutation = {
             email: { type: new GraphQLNonNull(GraphQLString) },
             phone: { type: new GraphQLNonNull(GraphQLString) },
         },
-        resolve(parent, args) {
-            const client = new Client({
-                name: args.name,
-                email: args.email,
-                phone: args.phone,
-            })
+        async resolve(parent, args, context) {
 
-            return client.save().catch(error => {
+            if (!context.user) {
+                throw new AuthenticationError();
+            }
+
+            const userUID = await context?.user.uid
+
+            try {
+                const client = new Client({
+                    name: args.name,
+                    email: args.email,
+                    phone: args.phone,
+                    userUID
+                })
+
+                return await client.save()
+            } catch (error) {
                 console.error(`Error Creating Client: ${error}`)
-                throw error
-            })
+
+                throw new Error(error)
+            }
         }
     },
     deleteClient: {
@@ -84,13 +110,19 @@ const ClientMutation = {
         args: {
             id: { type: new GraphQLNonNull(GraphQLID) }
         },
-        async resolve(parent, args) {
+        async resolve(parent, args, context) {
+            if (!context.user) {
+                throw new AuthenticationError();
+            }
+
+            const userUID = await context?.user.uid
+
+
             try {
                 // First, delete all projects associated with this client
-                await Project.deleteMany({ clientId: args.id });
+                await Project.deleteMany({ clientId: args.id, userUID });
 
-                // Then, delete the client
-                const deletedClient = await Client.findByIdAndDelete(args.id);
+                const deletedClient = await Client.findOneAndDelete({ _id: args.id, userUID });
 
                 if (!deletedClient) {
                     throw new Error(`Client with ID: ${args.id} not found`);
@@ -111,34 +143,46 @@ const ClientMutation = {
             email: { type: GraphQLString },
             phone: { type: GraphQLString }
         },
-        resolve(parent, args) {
-            return Client.findById(args.id).then(prev => {
-                if (!prev) {
+        async resolve(parent, args, context) {
+
+            try {
+
+                const userUID = await context?.user.uid
+
+
+                const client = await Client.findOne({ _id: args.id, userUID })
+
+                if (!client) {
                     throw new Error(`Client with ID: ${args.id} not found!`)
                 }
 
-                return Client.findByIdAndUpdate(
-                    args.id,
+                const updatedClient = await Client.findOneAndUpdate({
+                    _id: args.id,
+                    userUID
+                },
                     {
                         $set: {
-                            name: args.name || prev.name,
-                            email: args.email || prev.email,
-                            phone: args.phone || prev.phone,
+                            name: args.name || client.name,
+                            email: args.email || client.email,
+                            phone: args.phone || client.phone,
+                            userUID: userUID || client.userUID
                         }
                     },
                     { new: true, runValidators: true }
                 )
-            }).then(updateProject => {
-                if (!updateProject) {
+
+                if (!updatedClient) {
                     throw new Error(`Failed to update project with ID: ${args.id}`);
                 }
 
-                return updateProject
-            }).catch(error => {
-                console.error(`Error updating project: ${error}`);
 
-                throw error
-            })
+                return updatedClient
+
+            } catch (error) {
+                console.error(`Error updating project: ${JSON.stringify(error, null, 2)}`);
+
+                throw new Error(error)
+            }
         }
     }
 
