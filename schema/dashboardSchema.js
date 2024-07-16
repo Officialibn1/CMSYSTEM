@@ -16,10 +16,16 @@ const DashboardType = new GraphQLObjectType({
 const DashboardQuery = {
     dashboardData: {
         type: DashboardType,
-        async resolve(parent, args) {
+        async resolve(parent, args, context) {
+            if (!context.user) {
+                throw new AuthenticationError();
+            }
+
+            const userUID = await context?.user.uid
+
             return {
-                clients: await Client.find(),
-                projects: await Project.find()
+                clients: await Client.find({ userUID }),
+                projects: await Project.find({ userUID })
             }
         }
     }
