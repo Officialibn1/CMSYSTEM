@@ -123,7 +123,18 @@ const ProjectMutation = {
                     userUID
                 })
 
-                return await project.save()
+                const savedProject = await project.save()
+
+                if (savedProject) {
+                    await Client.findByIdAndUpdate(args.clientId, {
+                        $push: { projectsID: savedProject._id }
+                    },
+                        {
+                            new: true, useFindAndModify: false
+                        })
+                }
+
+                return savedProject
 
             } catch (error) {
                 console.error(`Error creating project: ${JSON.stringify(error, null, 2)}`);
