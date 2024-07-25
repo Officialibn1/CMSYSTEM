@@ -188,4 +188,8 @@ const ClientMutation = {
 
 }
 
-module.exports = { ClientType, ClientQuery, ClientMutation }
+module.exports = {
+    ClientType,
+    ClientQuery,
+    ClientMutation
+}
