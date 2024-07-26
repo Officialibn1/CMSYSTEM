@@ -31,6 +31,8 @@ const mutation = new GraphQLObjectType({
         deleteProject: ProjectMutation.deleteProject,
         signUp: UserMutation.signUp,
         signIn: UserMutation.signIn,
+        updateProfile: UserMutation.updateProfile,
+
 
     }
 })

@@ -16,6 +16,7 @@ const UserType = new GraphQLObjectType({
             uid: { type: GraphQLString },
             email: { type: GraphQLString },
             name: { type: GraphQLString },
+            profileUrl: { type: GraphQLString },
             projects: {
                 type: new GraphQLList(ProjectType),
                 async resolve(parent, args) {
@@ -98,6 +99,45 @@ const UserMutation = {
 
                 return new Error(error.message)
 
+            }
+        }
+    },
+    updateProfile: {
+        type: UserType,
+        args: {
+            uid: { type: new GraphQLNonNull(GraphQLID) },
+            name: { type: new GraphQLNonNull(GraphQLString) },
+            email: { type: new GraphQLNonNull(GraphQLString) },
+            profileUrl: { type: GraphQLString },
+        },
+        async resolve(parent, { uid, name, email, profileUrl }, context) {
+            try {
+                const user = await admin.auth().getUser(uid)
+
+                if (!user) {
+                    throw new AuthenticationError()
+                }
+
+                await admin.auth().updateUser(uid, {
+                    email,
+                    displayName: name,
+                    photoURL: profileUrl ? profileUrl : null
+                })
+
+                const existingUser = await User.findOne({ uid })
+
+                const newUserData = await User.findByIdAndUpdate(existingUser._id, {
+                    name: name || existingUser.name,
+                    email: email || existingUser.email,
+                    profileUrl: profileUrl || existingUser.profileUrl
+                })
+
+                return newUserData
+            } catch (error) {
+                console.log(error);
+                console.log(JSON.stringify(error, null, 2));
+
+                throw new Error(error)
             }
         }
     }
