@@ -140,7 +140,37 @@ const UserMutation = {
                 throw new Error(error)
             }
         }
-    }
+    },
+    updatePassword: {
+        type: UserType,
+        args: {
+            uid: { type: new GraphQLNonNull(GraphQLID) },
+            password: { type: new GraphQLNonNull(GraphQLString) },
+
+        },
+        async resolve(parent, { uid, password }, context) {
+            try {
+                const user = await admin.auth().getUser(uid)
+
+                if (!user) {
+                    throw new AuthenticationError()
+                }
+
+                await admin.auth().updateUser(uid, {
+                    password
+                })
+
+                const existingUser = await User.findOne({ uid })
+
+                return existingUser
+            } catch (error) {
+                console.log(error);
+                console.log(JSON.stringify(error, null, 2));
+
+                throw new Error(error)
+            }
+        }
+    },
 }
 
 module.exports = { UserType, UserMutation, UserQuery }
