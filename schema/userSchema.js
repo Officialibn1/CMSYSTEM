@@ -171,6 +171,44 @@ const UserMutation = {
             }
         }
     },
+    eraseData: {
+        type: UserType,
+        args: {
+            uid: { type: new GraphQLNonNull(GraphQLID) }
+        },
+        async resolve(parent, { uid }, context) {
+
+            if (!context.user.uid) {
+                throw new AuthenticationError()
+            }
+
+            const contextUID = await context.user.uid
+
+            if (contextUID !== uid) {
+                throw new Error('You dont have the permission to perform this operation')
+            }
+
+            try {
+                const userUID = await context?.user.uid
+
+                await Project.deleteMany({ userUID })
+
+                await Client.deleteMany({ userUID })
+
+                return {
+                    message: 'Data erased successfully!'
+                }
+            } catch (error) {
+
+                console.log('Erasing User Data Error: ', error);
+
+
+                throw new Error(error)
+
+
+            }
+        }
+    }
 }
 
 module.exports = { UserType, UserMutation, UserQuery }

@@ -33,6 +33,7 @@ const mutation = new GraphQLObjectType({
         signIn: UserMutation.signIn,
         updateProfile: UserMutation.updateProfile,
         updatePassword: UserMutation.updatePassword,
+        eraseData: UserMutation.eraseData,
 
 
     }
