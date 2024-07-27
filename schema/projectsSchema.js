@@ -11,7 +11,7 @@ const {
     GraphQLEnumType,
     GraphQLList,
     GraphQLNonNull,
-    GraphQLInt
+    GraphQLFloat
 } = require('graphql')
 const { AuthenticationError } = require('../config/errors/authenticationError.js')
 
@@ -27,7 +27,7 @@ const ProjectType = new GraphQLObjectType({
             name: { type: GraphQLString },
             description: { type: GraphQLString },
             status: { type: GraphQLString },
-            budget: { type: GraphQLInt },
+            budget: { type: GraphQLFloat },
             client: {
                 type: ClientType,
                 async resolve(parent, args, context) {
@@ -89,7 +89,7 @@ const ProjectMutation = {
         args: {
             name: { type: new GraphQLNonNull(GraphQLString) },
             description: { type: new GraphQLNonNull(GraphQLString) },
-            budget: { type: new GraphQLNonNull(GraphQLInt) },
+            budget: { type: new GraphQLNonNull(GraphQLFloat) },
             status: {
                 type: new GraphQLEnumType({
                     name: 'ProjectStatus',
@@ -176,7 +176,7 @@ const ProjectMutation = {
         args: {
             id: { type: new GraphQLNonNull(GraphQLID) },
             name: { type: GraphQLString },
-            budget: { type: new GraphQLNonNull(GraphQLInt) },
+            budget: { type: new GraphQLNonNull(GraphQLFloat) },
             description: { type: GraphQLString },
             status: {
                 type: new GraphQLEnumType({
