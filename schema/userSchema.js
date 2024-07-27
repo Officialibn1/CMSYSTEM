@@ -178,34 +178,63 @@ const UserMutation = {
         },
         async resolve(parent, { uid }, context) {
 
-            if (!context.user.uid) {
+            if (!context.user) {
                 throw new AuthenticationError()
             }
 
             const contextUID = await context.user.uid
 
             if (contextUID !== uid) {
-                throw new Error('You dont have the permission to perform this operation')
+                throw new Error('You don\'t have the permission to perform this operation')
             }
 
             try {
-                const userUID = await context?.user.uid
+                await Project.deleteMany({ contextUID })
 
-                await Project.deleteMany({ userUID })
-
-                await Client.deleteMany({ userUID })
+                await Client.deleteMany({ contextUID })
 
                 return {
                     message: 'Data erased successfully!'
                 }
             } catch (error) {
-
                 console.log('Erasing User Data Error: ', error);
-
 
                 throw new Error(error)
 
 
+            }
+        }
+    },
+    deleteAccount: {
+        type: UserType,
+        args: {
+            uid: { type: new GraphQLNonNull(GraphQLID) }
+        },
+        async resolve(parent, { uid }, context) {
+            if (!context.user) {
+                throw new AuthenticationError()
+            }
+
+            const contextUID = await context?.user.uid
+
+            if (contextUID !== uid) {
+                throw new Error('You don\'t have permission to perform this operation')
+            }
+
+            try {
+                await Project.deleteMany({ contextUID })
+
+                await Client.deleteMany({ contextUID })
+
+                await admin.auth().deleteUser(uid)
+
+                return {
+                    message: 'Data erased successfully!'
+                }
+            } catch (error) {
+                console.log('Erasing User Data Error: ', error);
+
+                throw new Error(error)
             }
         }
     }
