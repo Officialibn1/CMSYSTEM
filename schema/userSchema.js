@@ -118,13 +118,16 @@ const UserMutation = {
                     throw new AuthenticationError()
                 }
 
+                const existingUser = await User.findOne({ uid })
+
+
                 await admin.auth().updateUser(uid, {
                     email,
                     displayName: name,
-                    photoURL: profileUrl ? profileUrl : null
+                    photoURL: profileUrl ? profileUrl : user.profileUrl,
+                    emailVerified: user.email === email
                 })
 
-                const existingUser = await User.findOne({ uid })
 
                 const newUserData = await User.findByIdAndUpdate(existingUser._id, {
                     name: name || existingUser.name,
